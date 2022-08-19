@@ -1,15 +1,18 @@
+// Package models describe the database in a format that go understands
 package models
 
-import "time"
+import (
+	"time"
+)
 
 // User is the user model
 type User struct {
-	ID          int       `json:"id,omitempty"`
-	FirstName   string    `json:"first_name,omitempty"`
-	LastName    string    `json:"last_name,omitempty"`
-	Email       string    `json:"email,omitempty"`
-	Password    string    `json:"password,omitempty"`
-	AccessLevel int       `json:"access_level,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          int       `validate:"uuid",json:"id,omitempty"`
+	FirstName   string    `validate:"required",json:"firstName,omitempty"`
+	LastName    string    `validate:"required",json:"lastName,omitempty"`
+	Email       string    `validate:"required,email",json:"email,omitempty"`
+	Password    string    `validate:"required,gte=10",json:"password,omitempty"`
+	AccessLevel int       `json:"accessLevel,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
