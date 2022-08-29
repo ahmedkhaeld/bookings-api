@@ -1,16 +1,22 @@
 CREATE TABLE "users" (
-                            "id" integer PRIMARY KEY,
-                            "first_name" varchar NOT NULL DEFAULT '',
-                            "last_name" varchar NOT NULL DEFAULT '',
-                            "email" varchar NOT NULL,
-                            "password" varchar(60) NOT NULL ,
-                            "access_level" varchar NOT NULL DEFAULT 1
+                            id integer PRIMARY KEY,
+                            first_name varchar NOT NULL DEFAULT '',
+                            last_name varchar NOT NULL DEFAULT '',
+                            email varchar NOT NULL,
+                            password varchar(60) NOT NULL ,
+                            access_level varchar NOT NULL DEFAULT 1,
+                            created_at timestamp not null default (now()),
+                            updated_at timestamp not null default (now())
 );
 
 
 CREATE TABLE "rooms" (
                      id integer primary key ,
-                     room_name varchar default ''
+                     room_name varchar default '',
+                     price integer ,
+                     rate integer,
+                     created_at timestamp not null default (now()),
+                     updated_at timestamp not null default (now())
 );
 
 
@@ -23,12 +29,16 @@ CREATE TABLE "reservations" (
     "start_date" timestamp not null default (now()),
     "end_date" timestamp not null default (now()),
     "processed" integer default 0,
-    "room_id" integer references rooms(id)
+    "room_id" integer references rooms(id),
+    created_at timestamp not null default (now()),
+    updated_at timestamp not null default (now())
 );
 
 CREATE TABLE "restrictions" (
     "id" integer primary key,
-    restriction_name varchar default ''
+    restriction_name varchar default '',
+    created_at timestamp not null default (now()),
+    updated_at timestamp not null default (now())
 );
 
 CREATE TABLE "room_restrictions" (
@@ -37,7 +47,9 @@ CREATE TABLE "room_restrictions" (
     end_date timestamp not null default (now()),
     "room_id" integer references rooms(id),
     reservation_id integer not null references reservations(id) on update cascade on delete cascade ,
-    restriction_id integer references restrictions(id)
+    restriction_id integer references restrictions(id),
+    created_at timestamp not null default (now()),
+    updated_at timestamp not null default (now())
 
 );
 
