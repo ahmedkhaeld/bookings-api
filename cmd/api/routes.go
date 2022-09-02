@@ -27,5 +27,8 @@ func routes() http.Handler {
 	mux.Put("/rooms/{room-id}", handlers.H.PutRoom)
 	mux.Delete("/rooms/{room-id}", handlers.H.DeleteRoom)
 
+	mux.Post("/rooms/{room-id}/check-availability", handlers.H.PostCheckSingleRoomAvailability)
+	mux.Post("/rooms/check-availability", handlers.H.PostCheckAllRoomsAvailability)
+
 	return mux
 }

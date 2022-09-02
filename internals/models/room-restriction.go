@@ -5,7 +5,7 @@ import "time"
 
 // RoomRestriction is the room restriction model
 type RoomRestriction struct {
-	ID            int         `validate:"uuid",json:"id"`
+	ID            int         `json:"id"`
 	StartDate     time.Time   `json:"startDate"`
 	EndDate       time.Time   `json:"endDate"`
 	RoomID        int         `json:"roomID"`
