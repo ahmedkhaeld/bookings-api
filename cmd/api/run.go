@@ -20,7 +20,6 @@ func run() *driver.DB {
 	// connect to database
 	log.Println("Connecting to database")
 	db := driver.ConnectPostgres(env.POSTGRES)
-	//db := driver.ConnectMongo(env.MongoURI)
 
 	// make sure the database connection is available to the handlers
 	hand := handlers.Repo(db)
