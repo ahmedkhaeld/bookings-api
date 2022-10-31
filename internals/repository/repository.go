@@ -14,4 +14,6 @@ type Bookings interface {
 	DeleteRoom(r models.Room) error
 	SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error)
 	SearchAvailabilityByDatesByRoomID(start, end time.Time, roomID int) (bool, error)
+	InsertReservation(res models.Reservation) (int, error)
+	InsertRoomRestriction(r models.RoomRestriction) error
 }

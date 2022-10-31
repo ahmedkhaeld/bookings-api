@@ -30,5 +30,7 @@ func routes() http.Handler {
 	mux.Post("/rooms/{room-id}/check-availability", handlers.H.PostCheckSingleRoomAvailability)
 	mux.Post("/rooms/check-availability", handlers.H.PostCheckAllRoomsAvailability)
 
+	mux.Post("/rooms/{room-id}/make-reservation", handlers.H.PostReservation)
+
 	return mux
 }

@@ -10,19 +10,19 @@ import (
 )
 
 // Postgres implements the Bookings interface by sql methods
-type Postgres struct {
+type postgres struct {
 	DB *sql.DB
 }
 
 // PostgresRepo construct a postgres connection
 func PostgresRepo(conn *sql.DB) repository.Bookings {
-	return &Postgres{
+	return &postgres{
 		DB: conn,
 	}
 }
 
 //FetchAllRooms returns a collection of stored rooms
-func (p *Postgres) FetchAllRooms() ([]*models.Room, error) {
+func (p *postgres) FetchAllRooms() ([]*models.Room, error) {
 	//use the context because the user might lose connection for any reason
 	// this track the request within a context with a timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -35,7 +35,12 @@ func (p *Postgres) FetchAllRooms() ([]*models.Room, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 
 	for rows.Next() {
 		var r models.Room
@@ -60,7 +65,7 @@ func (p *Postgres) FetchAllRooms() ([]*models.Room, error) {
 }
 
 //FetchRoom returns a room by a given id
-func (p *Postgres) FetchRoom(id int) (models.Room, error) {
+func (p *postgres) FetchRoom(id int) (models.Room, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -84,7 +89,7 @@ func (p *Postgres) FetchRoom(id int) (models.Room, error) {
 }
 
 //UpdateRoom modify a room data record by id
-func (p *Postgres) UpdateRoom(r models.Room) error {
+func (p *postgres) UpdateRoom(r models.Room) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -106,7 +111,7 @@ func (p *Postgres) UpdateRoom(r models.Room) error {
 }
 
 //InsertRoom add new record in rooms table
-func (p *Postgres) InsertRoom(r models.Room) error {
+func (p *postgres) InsertRoom(r models.Room) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -128,7 +133,7 @@ func (p *Postgres) InsertRoom(r models.Room) error {
 }
 
 //DeleteRoom removes a room record by id
-func (p *Postgres) DeleteRoom(r models.Room) error {
+func (p *postgres) DeleteRoom(r models.Room) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -141,7 +146,7 @@ func (p *Postgres) DeleteRoom(r models.Room) error {
 	return nil
 }
 
-func (m *Postgres) SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error) {
+func (p *postgres) SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -160,7 +165,7 @@ func (m *Postgres) SearchAvailabilityForAllRooms(start, end time.Time) ([]models
 			where 
 			$1 < rr.end_date and $2 > rr.start_date)`
 
-	rows, err := m.DB.QueryContext(ctx, query, start, end)
+	rows, err := p.DB.QueryContext(ctx, query, start, end)
 	if err != nil {
 		return rooms, err
 	}
@@ -186,7 +191,7 @@ func (m *Postgres) SearchAvailabilityForAllRooms(start, end time.Time) ([]models
 	return rooms, nil
 }
 
-func (m *Postgres) SearchAvailabilityByDatesByRoomID(start, end time.Time, roomID int) (bool, error) {
+func (p *postgres) SearchAvailabilityByDatesByRoomID(start, end time.Time, roomID int) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -200,7 +205,7 @@ func (m *Postgres) SearchAvailabilityByDatesByRoomID(start, end time.Time, roomI
 			      room_id = $1
 				and ($2 < end_date and $3 > start_date)`
 
-	row := m.DB.QueryRowContext(ctx, query, roomID, start, end)
+	row := p.DB.QueryRowContext(ctx, query, roomID, start, end)
 	err := row.Scan(&numRows)
 	if err != nil {
 		return false, err
@@ -210,4 +215,53 @@ func (m *Postgres) SearchAvailabilityByDatesByRoomID(start, end time.Time, roomI
 		return true, nil
 	}
 	return false, nil
+}
+
+func (p *postgres) InsertReservation(res models.Reservation) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var newID int
+
+	stmt := `insert into reservations (id,first_name, last_name, email, 
+			phone, start_date, end_date, room_id, created_at, updated_at)
+			values($1, $2, $3, $4, $5, $6, $7, $8, $9,$10) returning id`
+	err := p.DB.QueryRowContext(ctx, stmt,
+		res.ID,
+		res.FirstName,
+		res.LastName,
+		res.Email,
+		res.Phone,
+		res.StartDate,
+		res.EndDate,
+		res.RoomID,
+		time.Now(),
+		time.Now()).Scan(&newID)
+	if err != nil {
+		return 0, err
+	}
+	return newID, nil
+
+}
+
+func (m *postgres) InsertRoomRestriction(rr models.RoomRestriction) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := `insert into room_restrictions (id,start_date, end_date, room_id, 
+			reservation_id, created_at, updated_at, restriction_id)
+            values ($1, $2, $3, $4, $5, $6, $7,$8)`
+
+	_, err := m.DB.ExecContext(ctx, stmt,
+		rr.ID,
+		rr.StartDate,
+		rr.EndDate,
+		rr.RoomID,
+		rr.ReservationID,
+		time.Now(),
+		time.Now(),
+		rr.RestrictionID)
+	if err != nil {
+		return nil
+	}
+	return nil
 }
